@@ -2,6 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
 def is_allowed_to_scrape(url):
     """
@@ -19,6 +23,8 @@ def is_allowed_to_scrape(url):
     rp.set_url(robots_url)
     try:
         rp.read()
+        for entry in rp.entries:
+            print(entry)
         return rp.can_fetch("*", url)
     except:
         print(f"Couldn't retrieve or parse robots.txt for {robots_url}. Proceeding with caution.")
@@ -72,8 +78,9 @@ def parse_multiple_sites(sites):
 
 # Example usage
 sites = [
-    {'url': 'https://example-blog.com', 'selector': {'tag': 'h1', 'class_': 'entry-title'}},
-    # {'url': 'https://example-blog2.com', 'selector': {'tag': 'h2', 'class_': 'post-title'}},
+    {'url': 'https://dnes.bg', 'selector': {'tag': 'h1', 'class_': ''}},
+    {'url': 'https://amazon.com', 'selector': {'tag': 'h2', 'class_': ''}},
+    {'url': 'https://scrapethissite.com/pages', 'selector': {'tag': 'h3', 'class_': 'page-title'}},
     # Add more sites and selectors as needed
 ]
 
