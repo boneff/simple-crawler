@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 import logging
+import csv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
@@ -21,6 +22,7 @@ def is_allowed_to_scrape(url):
     robots_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
     rp = RobotFileParser()
     rp.set_url(robots_url)
+    #print(robots_url)
     try:
         rp.read()
         for entry in rp.entries:
@@ -65,14 +67,19 @@ def parse_multiple_sites(sites):
         sites (list of dict): List of dictionaries where each dictionary contains 'url' and 'selector'.
     
     Returns:
-        dict: A dictionary with URLs as keys and extracted content as values.
+        list: A list of results
     """
-    results = {}
+    results = []
     for site in sites:
         url = site['url']
         selector = site['selector']
         print(f"Checking permission and parsing content from {url}...")
-        results[url] = fetch_content(url, selector)
+        content = fetch_content(url, selector)
+        result = {
+            "url":  url,
+            "content": content
+        }
+        results.append(result)
     
     return results
 
@@ -85,8 +92,15 @@ sites = [
 ]
 
 parsed_data = parse_multiple_sites(sites)
-for url, data in parsed_data.items():
-    print(f"Content from {url}:")
-    for item in data:
-        print(" -", item)
-    print("Done")
+print(parsed_data)
+# for url, data in parsed_data.items():
+#     print(f"Content from {url}:")
+#     for item in data:
+#         print(" -", item)
+#     print("Done")
+
+# Define CSV file and headers
+with open('posts.csv', mode='w', newline='') as file:
+    writer = csv.DictWriter(file, fieldnames=['url', 'content'])
+    writer.writeheader()
+    writer.writerows(parsed_data)
