@@ -10,7 +10,7 @@ import sqlite3
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
 
-use_storage = False
+use_storage = True
 
 def is_allowed_to_scrape(url):
     """
@@ -46,22 +46,23 @@ def fetch_content(url, selector):
                          Example: {'tag': 'h1', 'class_': 'entry-title'}
     
     Returns:
-        list: A list of text content from the matched elements.
+        string: A string of text content from the matched elements.
     """
     if not is_allowed_to_scrape(url):
         print(f"Scraping disallowed by robots.txt for {url}. Skipping...")
-        return []
+        return ""
 
     try:
         response = requests.get(url)
         response.raise_for_status()  # Raises an error for non-2xx responses
     except requests.exceptions.RequestException as e:
         print(f"Error fetching {url}: {e}")
-        return []
+        return ""
 
     soup = BeautifulSoup(response.content, 'html.parser')
     elements = soup.find_all(selector['tag'], class_=selector.get('class_'))
-    return [element.get_text() for element in elements]
+    text = [element.get_text() for element in elements]
+    return ", ".join(text)
 
 def parse_multiple_sites(sites):
     """
@@ -120,14 +121,14 @@ if use_storage:
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        date TEXT
+        url TEXT,
+        content STRING
     )
     ''')
 
-    # Insert data into the table
-    cursor.executemany('INSERT INTO posts (title, date) VALUES (?, ?)', 
-                    [('Post 1', '2023-09-01'), ('Post 2', '2023-09-02')])
+    for data in parsed_data:
+        cursor.execute('INSERT INTO posts (url, content) VALUES (?, ?)', (data['url'], data['content']))
+
 
     # Commit the transaction and close the connection
     conn.commit()
