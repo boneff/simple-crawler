@@ -4,9 +4,13 @@ from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 import logging
 import csv
+import sqlite3
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
+
+use_storage = False
 
 def is_allowed_to_scrape(url):
     """
@@ -104,3 +108,27 @@ with open('posts.csv', mode='w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=['url', 'content'])
     writer.writeheader()
     writer.writerows(parsed_data)
+
+if use_storage:
+    # Connect to SQLite database (or create one)
+    conn = sqlite3.connect('scraped_data.db')
+
+    # Create a cursor object to execute SQL commands
+    cursor = conn.cursor()
+
+    # Create a table for storing scraped data
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        date TEXT
+    )
+    ''')
+
+    # Insert data into the table
+    cursor.executemany('INSERT INTO posts (title, date) VALUES (?, ?)', 
+                    [('Post 1', '2023-09-01'), ('Post 2', '2023-09-02')])
+
+    # Commit the transaction and close the connection
+    conn.commit()
+    conn.close()
